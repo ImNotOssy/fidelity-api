@@ -13,6 +13,6 @@ setup(
     license="GPL",
     url="https://github.com/kennyboy106/fidelity-api",
     keywords=["FIDELITY", "API"],
-    install_requires=["playwright", "playwright-stealth", "pyotp"],
+    install_requires=["playwright", "playwright-sm", "pyotp"],
     packages=["fidelity"],
 )
