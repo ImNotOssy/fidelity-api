@@ -581,16 +581,28 @@ class FidelityAutomation:
         try:
             # Go to the login page
             self.page.goto(
-                url="https://digital.fidelity.com/prgw/digital/login/full-page",
+                url="https://digital.fidelity.com/prgw/digital/login/full-page?AuthRedUrl=https://digital.fidelity.com/ftgw/digital/portfolio/summary",
+                timeout=60000,
+            )
+            
+            self.page.wait_for_timeout(1000)
+            
+            self.page.goto(
+                url="https://digital.fidelity.com/prgw/digital/login/full-page?AuthRedUrl=https://digital.fidelity.com/ftgw/digital/portfolio/summary",
                 timeout=60000,
             )
 
             # Login page
             self.page.get_by_label("Username", exact=True).click()
+            self.page.wait_for_timeout(500)
             self.page.get_by_label("Username", exact=True).fill(username)
+            self.page.wait_for_timeout(500)
             self.page.get_by_label("Password", exact=True).click()
+            self.page.wait_for_timeout(500)
             self.page.get_by_label("Password", exact=True).fill(password)
+            self.page.wait_for_timeout(500)
             self.page.get_by_role("button", name="Log in").click()
+            self.page.wait_for_timeout(500)
 
             # Wait for loading spinner to go away
             self.wait_for_loading_sign()
