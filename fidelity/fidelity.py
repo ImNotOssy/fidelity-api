@@ -822,11 +822,6 @@ class FidelityAutomation:
             self.page.query_selector("#dest-acct-dropdown").click()
             
             # Define a more specific locator that targets the button specifically
-            account_option = self.page.get_by_role("option").filter(has_text=account.upper()).locator("button")
-            
-            # If the above doesn't work because the button IS the option (not inside it), use this instead:
-            # account_option = self.page.locator("button[role='option']").filter(has_text=account.upper())
-            
             # Based on your error log, the button ITSELF has role="option", so use this one:
             account_locator = self.page.locator("button[role='option']").filter(has_text=account.upper())
 
@@ -850,6 +845,8 @@ class FidelityAutomation:
 
             # Wait for quote panel to show up
             self.page.locator("#quote-panel").wait_for(timeout=5000)
+            
+            # Get initial price (this might be closing price)
             last_price = self.page.query_selector("#eq-ticket__last-price > span.last-price").text_content()
             last_price = last_price.replace("$", "")
 
@@ -859,15 +856,41 @@ class FidelityAutomation:
                 # Wait for it to take effect
                 self.page.get_by_role("button", name="Calculate shares").wait_for(timeout=5000)
 
-            # When enabling extended hour trading
+            # --- EXTENDED HOURS LOGIC ---
             extended = False
             precision = 3
-            # Enable extended hours trading if available
-            if self.page.get_by_text("Extended hours trading").is_visible():
+
+            # Check for the specific Extended Hours button provided
+            # We locate the wrapper because it holds the state class (pvd-switch--on)
+            extended_wrapper = self.page.locator(".eq-ticket__extendedhour-toggle")
+            extended_btn = self.page.locator("#eq-ticket_extendedhour")
+            
+            if extended_btn.is_visible():
+                # Check if it is already toggled on using the wrapper class
+                class_attr = extended_wrapper.first.get_attribute("class")
+                if class_attr and "pvd-switch--on" in class_attr:
+                    print("Extended Hours Trading is already active.")
+                else:
+                    print("Enabling Extended Hours Trading...")
+                    extended_btn.click()
+                    # Wait for the toggle animation and price update
+                    self.page.wait_for_timeout(1000)
+                
+                extended = True
+                precision = 2
+
+                # Refresh the price! The UI likely switched from Closing Price to Ext Hrs Price
+                if self.page.locator("#eq-ticket__last-price > span.last-price").is_visible():
+                    new_price = self.page.query_selector("#eq-ticket__last-price > span.last-price").text_content()
+                    last_price = new_price.replace("$", "").replace(",", "")
+
+            # Fallback to old text-based check if the button ID changes or isn't present
+            elif self.page.get_by_text("Extended hours trading").is_visible():
                 if self.page.get_by_text("Extended hours trading: OffUntil 8:00 PM ET").is_visible():
                     self.page.get_by_text("Extended hours trading: OffUntil 8:00 PM ET").check()
                 extended = True
                 precision = 2
+            # --- END EXTENDED HOURS LOGIC ---
 
             # Press the buy or sell button. Title capitalizes the first letter so 'buy' -> 'Buy'
             # Define the elements
